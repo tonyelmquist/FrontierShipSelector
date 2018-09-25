@@ -6,17 +6,6 @@ import ChartistGraph from "react-chartist";
 import withStyles from "@material-ui/core/styles/withStyles";
 import Icon from "@material-ui/core/Icon";
 // @material-ui/icons
-import Store from "@material-ui/icons/Store";
-import Warning from "@material-ui/icons/Warning";
-import DateRange from "@material-ui/icons/DateRange";
-import LocalOffer from "@material-ui/icons/LocalOffer";
-import Update from "@material-ui/icons/Update";
-import ArrowUpward from "@material-ui/icons/ArrowUpward";
-import AccessTime from "@material-ui/icons/AccessTime";
-import Accessibility from "@material-ui/icons/Accessibility";
-import BugReport from "@material-ui/icons/BugReport";
-import Code from "@material-ui/icons/Code";
-import Cloud from "@material-ui/icons/Cloud";
 // core components
 import GridItem from "components/Grid/GridItem.jsx";
 import GridContainer from "components/Grid/GridContainer.jsx";
@@ -31,23 +20,22 @@ import CardBody from "components/Card/CardBody.jsx";
 import CardFooter from "components/Card/CardFooter.jsx";
 import SimpleMap from "../../positionlist/SimpleMap";
 
-import { bugs, website, server } from "variables/general";
-
-import {
-  dailySalesChart,
-  emailsSubscriptionChart,
-  completedTasksChart
-} from "variables/charts";
+import Slider from '@material-ui/lab/Slider';
 
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
 
 class Dashboard extends React.Component {
   state = {
-    value: 0
+    value: 0,
+    port: false
   };
   handleChange = (event, value) => {
     this.setState({ value });
   };
+
+  setPort = port => {
+    this.setState({ port });
+  }
 
   handleChangeIndex = index => {
     this.setState({ value: index });
@@ -57,9 +45,61 @@ class Dashboard extends React.Component {
     return (
       <div>
         <GridContainer>
-        <GridItem xs={12} sm={12} md={12}>
-          <SimpleMap />
-            {/*  <Card>
+          <GridItem xs={12} sm={6} md={4}>
+            <Card>
+              <CardHeader color="warning" stats icon>
+                <CardIcon color="warning">
+                  <Icon>place</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Cargo Location</p>
+                <input 
+                  type="text" 
+                  name="lat" 
+                  label="Lat" 
+                  value={this.state.port ? this.state.port.lat : null}
+                />
+                <input
+                  type="text" 
+                  name="lon" 
+                  label="Lon" 
+                  value={this.state.port ? this.state.port.lat : null}
+                />
+              </CardHeader>
+              <CardFooter >
+                <Slider value={5} aria-labelledby="label" />
+              </CardFooter>
+            </Card>
+          </GridItem>
+          <GridItem xs={12} sm={6} md={4}>
+            <Card>
+              <CardHeader color="success" stats icon>
+                <CardIcon color="success">
+                  <Icon>today</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Days to Location</p>
+                <h3 className={classes.cardTitle}>$34,245</h3>
+              </CardHeader>
+              <CardFooter >
+                  <Slider value={5} aria-labelledby="label" />
+              </CardFooter>
+            </Card>
+          </GridItem>
+          <GridItem xs={12} sm={6} md={4}>
+            <Card>
+              <CardHeader color="danger" stats icon>
+                <CardIcon color="danger">
+                  <Icon>data_usage</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Predictive Availability</p>
+                <h3 className={classes.cardTitle}>75</h3>
+              </CardHeader>
+              <CardFooter >
+                <Slider value={5} aria-labelledby="label" />
+              </CardFooter>
+            </Card>
+          </GridItem>
+          <GridItem xs={12} sm={12} md={12}>
+            <SimpleMap port={this.state.port} setPort={this.setPort} /> {/*  <Card>
               <CardHeader color="warning" stats icon>
                 <CardIcon color="warning">
                   <Icon>content_copy</Icon>
