@@ -66,7 +66,7 @@ class Dashboard extends React.Component {
                 />
               </CardHeader>
               <CardFooter >
-                <Slider value={5} aria-labelledby="label" />
+                <Slider value={1} min={0} max={6} step={1} name="portValue" aria-labelledby="label" onChange={this.handleChange} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -77,10 +77,10 @@ class Dashboard extends React.Component {
                   <Icon>today</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Days to Location</p>
-                <h3 className={classes.cardTitle}>$34,245</h3>
+                <h3 className={classes.cardTitle}>1</h3>
               </CardHeader>
               <CardFooter >
-                  <Slider value={5} aria-labelledby="label" />
+                  <Slider value={1} min={0} max={6} step={1} name="routeDays" aria-labelledby="label" onChange={this.handleChange} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -94,7 +94,7 @@ class Dashboard extends React.Component {
                 <h3 className={classes.cardTitle}>75</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={5} aria-labelledby="label" />
+                <Slider value={1} min={0} max={100} step={1} name="paValue" aria-labelledby="label" onChange={this.handleChange} />
               </CardFooter>
             </Card>
           </GridItem>

@@ -66,18 +66,18 @@ class SimpleMap extends Component {
       });
   };
 
-  /*
-    addMarker = e => {
-      const port = e.latlng;
-      this.props.setPort(port);
-    }
-  
-  
-    onZoomend = () => {
-      //const zoom = this.map.leafletElement.getZoom();
-      //this.setState({currentZoom: zoom});
-      console.log(this)
-    }*/
+
+  addMarker = e => {
+    const port = e.latlng;
+    this.props.setPort(port);
+  }
+
+
+  onZoomend = () => {
+    //const zoom = this.map.leafletElement.getZoom();
+    //this.setState({currentZoom: zoom});
+    console.log(this)
+  }
 
   parseVessels = response => {
     const vesselArray = response.vessels.map(vessel => {
@@ -95,45 +95,45 @@ class SimpleMap extends Component {
 
     this.setState({ currentVessels: vesselArray });
   };
-  /*
-    plotCurrentVessels = (vessels, zoom) => {
-  
-      const baseWidth = 225 / zoom;
-  
-      const tanker = new Leaflet.Icon({
-        iconUrl: require('assets/img/ship.svg'),
-        iconSize: [baseWidth, baseWidth / 2], // size of the icon
-        iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
-      })
-  
-      const antiTanker = new Leaflet.Icon({
-        iconUrl: require('assets/img/antiship.svg'),
-        iconSize: [baseWidth, baseWidth / 2], // size of the icon
-        iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
-      })
-  
-  
-      const vesselPoints = vessels.map((vessel, i) => {
-  
-        return (
-          <RotatedMarker key={i} icon={vessel.heading > 180 ? tanker : antiTanker} position={vessel.position} rotationAngle={vessel.heading + 90} rotationOrigin={'center'} >
-            <Popup>
-              <div>
-                <h4>{vessel.name}</h4>
-                <p>IMO:{vessel.imo} </p>
-                <p>Destination:{vessel.destination} </p>
-                <p>Heading:{vessel.heading} </p>
-                <p>Speed:{vessel.speedOverGround} </p>
-              </div>
-            </Popup>
-          </RotatedMarker>
-        );
-      });
-  
-      return vesselPoints;
-    }; */
+
+  plotCurrentVessels = (vessels, zoom) => {
+
+    const baseWidth = 225 / zoom;
+
+    const tanker = new Leaflet.Icon({
+      iconUrl: require('assets/img/ship.svg'),
+      iconSize: [baseWidth, baseWidth / 2], // size of the icon
+      iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
+      popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
+    })
+
+    const antiTanker = new Leaflet.Icon({
+      iconUrl: require('assets/img/antiship.svg'),
+      iconSize: [baseWidth, baseWidth / 2], // size of the icon
+      iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
+      popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
+    })
+
+
+    const vesselPoints = vessels.map((vessel, i) => {
+
+      return (
+        <RotatedMarker key={i} icon={vessel.heading > 180 ? tanker : antiTanker} position={vessel.position} rotationAngle={vessel.heading + 90} rotationOrigin={'center'} >
+          <Popup>
+            <div>
+              <h4>{vessel.name}</h4>
+              <p>IMO:{vessel.imo} </p>
+              <p>Destination:{vessel.destination} </p>
+              <p>Heading:{vessel.heading} </p>
+              <p>Speed:{vessel.speedOverGround} </p>
+            </div>
+          </Popup>
+        </RotatedMarker>
+      );
+    });
+
+    return vesselPoints;
+  };
 
 
   render() {
@@ -183,11 +183,16 @@ class SimpleMap extends Component {
     if (this.state.loading) return false;
     return (
       <div>
-        <ReactBingmaps
-          bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
-          center={[13.0827, 80.2707]}
-        >
-        </ReactBingmaps>
+        <LeafletMap center={position} zoom={this.state.zoom} ref={(ref) => { this.map = ref; }} onClick={() => this.addMarker()}>
+          <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}" attribution="Tiles &copy; Esri &mdash; Sources: GEBCO, NOAA, CHS, OSU, UNH, CSUMB, National Geographic, DeLorme, NAVTEQ, and Esri" maxZoom={13} />
+          <TileLayer url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png" attribution="Map data: &copy; <a href='http://www.openseamap.org'>OpenSeaMap</a> contributors" />
+          {this.plotCurrentVessels(vessels, this.state.currentZoom)}
+          {this.props.port ? <Marker key={`marker-${this.props.port.lat}`} icon={MarkerIcon} position={this.props.port}>
+            <Popup>
+              <span>{this.props.port}</span>
+            </Popup>
+          </Marker> : null}
+        </LeafletMap>
         <MUIDataTable
           title={"Position List"}
           data={tableData}
