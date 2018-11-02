@@ -183,17 +183,25 @@ class SimpleMap extends Component {
     if (this.state.loading) return false;
     return (
       <div>
-        <ReactBingmaps
-          bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
-          center={[13.0827, 80.2707]}
-        >
-        </ReactBingmaps>
-        <MUIDataTable
-          title={"Position List"}
-          data={tableData}
-          columns={columns}
-          options={options}
-        />
+        <div style={{
+          height: "400px",
+          boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.14)",
+          marginBottom: "30px",
+          borderRadius: "6px",
+        }}>
+          <ReactBingmaps
+            bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
+            center={[13.0827, 80.2707]}
+          />
+        </div>
+        <div>
+          <MUIDataTable
+            title={"Position List"}
+            data={tableData}
+            columns={columns}
+            options={options}
+          />
+        </div>
       </div>
     );
   }
