@@ -229,3 +229,15 @@ footer ul li a:hover {
         overflow-x: hidden;
     }
 }
+
+
+
+p.shipBoxLine {
+  font-size: 10px;
+  line-height: 10px;
+}
+p.shipBoxLineBold {
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: bold;
+}

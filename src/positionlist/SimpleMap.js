@@ -95,51 +95,44 @@ class SimpleMap extends Component {
 
     this.setState({ currentVessels: vesselArray });
   };
-  /*
-    plotCurrentVessels = (vessels, zoom) => {
-  
-      const baseWidth = 225 / zoom;
-  
-      const tanker = new Leaflet.Icon({
-        iconUrl: require('assets/img/ship.svg'),
-        iconSize: [baseWidth, baseWidth / 2], // size of the icon
-        iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
-      })
-  
-      const antiTanker = new Leaflet.Icon({
-        iconUrl: require('assets/img/antiship.svg'),
-        iconSize: [baseWidth, baseWidth / 2], // size of the icon
-        iconAnchor: [baseWidth / 2, baseWidth / 4], // point of the icon which will correspond to marker's location
-        popupAnchor: [0, 0]// point from which the popup should open relative to the iconAnchor
-      })
-  
-  
-      const vesselPoints = vessels.map((vessel, i) => {
-  
-        return (
-          <RotatedMarker key={i} icon={vessel.heading > 180 ? tanker : antiTanker} position={vessel.position} rotationAngle={vessel.heading + 90} rotationOrigin={'center'} >
-            <Popup>
-              <div>
-                <h4>{vessel.name}</h4>
-                <p>IMO:{vessel.imo} </p>
-                <p>Destination:{vessel.destination} </p>
-                <p>Heading:{vessel.heading} </p>
-                <p>Speed:{vessel.speedOverGround} </p>
-              </div>
-            </Popup>
-          </RotatedMarker>
-        );
-      });
-  
-      return vesselPoints;
-    }; */
+
+  plotCurrentVessels = (vessels, zoom) => {
+
+    const baseWidth = 225 / zoom;
+
+
+
+    const vesselPoints = vessels.map((vessel, i) => {
+
+      return {
+        "location": vessel.position,
+        "addHandler": "mouseover", //on mouseover the pushpin, infobox shown
+
+        "infoboxOption": {
+          title: vessel.name, description: `<div className="shipPoint">
+                <p class="shipBoxLine">IMO:${vessel.imo} </p>
+                <p class="shipBoxLine">Destination:${vessel.destination} </p>
+                <p class="shipBoxLine">Heading:${vessel.heading} </p>
+                <p class="shipBoxLine">Speed:${vessel.speedOverGround} </p>
+              </div>` },
+        "pushPinOption": { title: vessel.name, icon: '' },
+        "infoboxAddHandler": { "type": "click", callback: this.callBackMethod },
+        "pushPinAddHandler": { "type": "click", callback: this.callBackMethod }
+      }
+    });
+
+    return vesselPoints;
+  };
+
+
+
 
 
   render() {
     const position = [this.state.lat, this.state.lng];
 
     const vessels = this.state.currentVessels;
+
 
     const columns = [
       {
@@ -192,6 +185,7 @@ class SimpleMap extends Component {
           <ReactBingmaps
             bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
             center={[13.0827, 80.2707]}
+            infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
           />
         </div>
         <div>

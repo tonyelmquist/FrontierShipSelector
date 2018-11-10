@@ -27,7 +27,7 @@ import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardS
 class Dashboard extends React.Component {
   state = {
     value: 0,
-    port: false
+    port: false,
   };
   handleChange = (event, value) => {
     this.setState({ value });
@@ -66,7 +66,7 @@ class Dashboard extends React.Component {
                 />
               </CardHeader>
               <CardFooter >
-                <Slider value={1} min={0} max={6} step={1} name="portValue" aria-labelledby="label" onChange={this.handleChange} />
+                <Slider value={1} min={0} max={6} step={1} name="portValue" aria-labelledby="label" onChange={() => this.handleChange} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -80,7 +80,7 @@ class Dashboard extends React.Component {
                 <h3 className={classes.cardTitle}>1</h3>
               </CardHeader>
               <CardFooter >
-                  <Slider value={1} min={0} max={6} step={1} name="routeDays" aria-labelledby="label" onChange={this.handleChange} />
+                <Slider value={this.state.routeDays} min={0} max={6} step={1} name="routeDays" aria-labelledby="label" onChange={() => this.handleChange} />
               </CardFooter>
             </Card>
           </GridItem>

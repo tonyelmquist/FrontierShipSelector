@@ -33,3 +33,14 @@
   height: 400px;
   width: 100%;
 }
+
+
+p.shipBoxLine {
+  font-size: 10px;
+  line-height: 10px;
+}
+p.shipBoxLineBold {
+  font-size: 10px;
+  line-height: 10px;
+  font-weight: bold;
+}
