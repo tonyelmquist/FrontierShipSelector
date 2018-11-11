@@ -19,6 +19,12 @@ import CardIcon from "components/Card/CardIcon.jsx";
 import CardBody from "components/Card/CardBody.jsx";
 import CardFooter from "components/Card/CardFooter.jsx";
 import SimpleMap from "../../positionlist/SimpleMap";
+import Input from '@material-ui/core/Input';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import FormControl from '@material-ui/core/FormControl';
+import Select from '@material-ui/core/Select';
 
 import Slider from '@material-ui/lab/Slider';
 
@@ -27,7 +33,7 @@ import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardS
 class Dashboard extends React.Component {
   state = {
     value: 0,
-    port: false,
+    port: ""
   };
   handleChange = (event, value) => {
     this.setState({ value });
@@ -52,22 +58,38 @@ class Dashboard extends React.Component {
                   <Icon>place</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Cargo Location</p>
-                <input 
-                  type="text" 
-                  name="lat" 
-                  label="Lat" 
+                <input
+                  type="text"
+                  name="lat"
+                  label="Lat"
                   value={this.state.port ? this.state.port.lat : null}
                 />
                 <input
-                  type="text" 
-                  name="lon" 
-                  label="Lon" 
+                  type="text"
+                  name="lon"
+                  label="Lon"
                   value={this.state.port ? this.state.port.lat : null}
                 />
               </CardHeader>
               <CardFooter >
-                <Slider value={1} min={0} max={6} step={1} name="portValue" aria-labelledby="label" onChange={() => this.handleChange} />
-              </CardFooter>
+                <FormControl className={classes.formControl}>
+                  <InputLabel htmlFor="age-simple">Age</InputLabel>
+                   <Select
+                    value={this.state.port}
+                    onChange={this.handleChange}
+                    inputProps={{
+                      name: 'age',
+                      id: 'age-simple',
+                    }}
+                  > 
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    <MenuItem value={10}>Ten</MenuItem>
+                    <MenuItem value={20}>Twenty</MenuItem>
+                    <MenuItem value={30}>Thirty</MenuItem>
+                  </Select>
+                </FormControl> </CardFooter>
             </Card>
           </GridItem>
           <GridItem xs={12} sm={6} md={4}>
