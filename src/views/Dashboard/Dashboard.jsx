@@ -28,7 +28,9 @@ import Select from '@material-ui/core/Select';
 
 import Slider from '@material-ui/lab/Slider';
 
+
 import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardStyle.jsx";
+import ports from './ports'
 
 class Dashboard extends React.Component {
   state = {
@@ -46,6 +48,24 @@ class Dashboard extends React.Component {
   handleChangeIndex = index => {
     this.setState({ value: index });
   };
+
+  renderPortList = () => {
+
+    var list = [];
+
+    for (var i in ports) {
+      list.push(ports[i]);
+    }
+
+    const portList = list.map((port, i) => {
+      return <MenuItem value={port.coordinates}><em>{port.name}</em> </MenuItem>
+    })
+console.log(portList)
+  return portList
+
+  }
+
+
   render() {
     const { classes } = this.props;
     return (
@@ -72,22 +92,20 @@ class Dashboard extends React.Component {
                 />
               </CardHeader>
               <CardFooter >
-                <FormControl className={classes.formControl}>
-                  <InputLabel htmlFor="age-simple">Age</InputLabel>
-                   <Select
+                <FormControl className="dashboardSelector">
+                  <InputLabel htmlFor="port">Port</InputLabel>
+                  <Select
                     value={this.state.port}
                     onChange={this.handleChange}
                     inputProps={{
-                      name: 'age',
-                      id: 'age-simple',
+                      name: 'port',
+                      id: 'port',
                     }}
-                  > 
+                  >
                     <MenuItem value="">
                       <em>None</em>
                     </MenuItem>
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
+                    {this.renderPortList()}
                   </Select>
                 </FormControl> </CardFooter>
             </Card>

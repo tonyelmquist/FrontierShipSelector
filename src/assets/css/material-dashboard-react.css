@@ -241,3 +241,7 @@ p.shipBoxLineBold {
   line-height: 10px;
   font-weight: bold;
 }
+
+.dashboardSelector{
+    width: 100%
+}

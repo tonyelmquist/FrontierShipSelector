@@ -4,6 +4,7 @@ import axios from "axios";
 
 import MUIDataTable from "mui-datatables";
 
+
 class SimpleMap extends Component {
   constructor() {
     super();
