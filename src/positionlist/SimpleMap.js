@@ -5,8 +5,9 @@ import axios from "axios";
 import MUIDataTable from "mui-datatables";
 
 class SimpleMap extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
+    this.myRef = React.createRef();
     this.state = {
       lat: 0,
       lng: 0,
@@ -14,8 +15,14 @@ class SimpleMap extends Component {
       loading: true,
       allVessels: [],
       currentVessels: [],
-      currentZoom: 5
+      currentZoom: 5,
+      dragging: false,
+      port: [13.0827, 80.2707],
+      mouseLocation: [13.0827, 80.2707]
     };
+    this.outputLocation = this.outputLocation.bind(this);
+    this.setDragEnd = this.setDragEnd.bind(this);
+    this.setDragStart = this.setDragStart.bind(this);
   }
 
   componentDidMount = () => {
@@ -63,6 +70,10 @@ class SimpleMap extends Component {
       });
   };
 
+  shouldComponentUpdate(){
+    return !this.state.dragging;
+  }
+
   /*
     addMarker = e => {
       const port = e.latlng;
@@ -93,18 +104,33 @@ class SimpleMap extends Component {
     this.setState({ allVessels: vesselArray });
   };
 
+
+  setDragStart = () =>{
+    this.setState({dragging: true})
+  }
+
+  setDragEnd = () =>{
+    this.setState({dragging: false})
+  }
+
+  outputLocation = location => {
+      if (this.state.dragging){
+        console.log(location)
+        this.setState({port: [location.latitude, location.longitude]})}
+  }
+
   plotCurrentVessels = (vessels, zoom) => {
     const pointer = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0V0z"/><path fill="#FF8800" transform="rotate(insertRotation 12 12)" opacity=".7" d="M7.72 17.7l3.47-1.53.81-.36.81.36 3.47 1.53L12 7.27z"/><path fill="#FFFFFF" transform="rotate(insertRotation 12 12)" d="M4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2 4.5 20.29zm8.31-4.12l-.81-.36-.81.36-3.47 1.53L12 7.27l4.28 10.43-3.47-1.53z"/></svg>'
     const destination = {
-      "location": [13.0827, 80.2707],
+      "location": this.state.port,
       "addHandler": "mouseover", //on mouseover the pushpin, infobox shown
       "infoboxOption": {
         title: "destination",
         visible: false,
       },
       "pushPinOption": { color: "red", draggable: true},
-      "infoboxAddHandler": { type: "click", callback: this.callBackMethod },
-      "pushPinAddHandler": { type: "click", callback: this.callBackMethod }
+      "pushPinAddHandler": [{ type: "dragend", callback: this.setDragEnd},
+      { type: "dragstart", callback: this.setDragStart},]
     }
     
     const vesselPoints = vessels.map((vessel, i) => {
@@ -123,11 +149,9 @@ class SimpleMap extends Component {
                 <p class="shipBoxLine">Speed:${vessel.speedOverGround} </p>
               </div>` },
         "pushPinOption": { title: vessel.name, icon: thisPointer },
-        "infoboxAddHandler": { "type": "click", callback: this.callBackMethod },
-        "pushPinAddHandler": { "type": "click", callback: this.callBackMethod }
+        "infoboxAddHandler": { "type": "click", callback: this.GetLocationHandled },
+        "pushPinAddHandler": { "type": "click", callback: this.GetLocationHandled }
       }
-
-
     });
 
     vesselPoints.push(destination);
@@ -187,11 +211,14 @@ class SimpleMap extends Component {
           marginBottom: "30px",
           borderRadius: "6px",
         }}>
-          <ReactBingmaps
+          <ReactBingmaps ref={this.myRef}
             bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
             center={[0, 0]}
             infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
             mapTypeId={"aerial"}
+            getLocation = {
+              {addHandler: "mousemove", callback:this.outputLocation}
+            }         
           />
         </div>
         <div>
