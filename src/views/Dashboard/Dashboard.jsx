@@ -24,7 +24,9 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
-import Select from '@material-ui/core/Select';
+import { Dropdown } from 'semantic-ui-react'
+import geolib from 'geolib'
+import axios from "axios";
 
 import Slider from '@material-ui/lab/Slider';
 
@@ -33,21 +35,132 @@ import dashboardStyle from "assets/jss/material-dashboard-react/views/dashboardS
 class Dashboard extends React.Component {
   state = {
     value: 0,
-    port: ""
+    port: { name: '', coordinates: [0, 0] },
+    portsArray: [],
+    routeDays: 1,
+    PA: 50,
+    allVessels: [],
+    currentVessels: [],
   };
+
+  componentDidMount = () => {
+    let ports = require('../../assets/json/ports.json');
+
+    const portsArray = Object.values(ports).map((port, i) => {
+      return { key: i, text: port.name, value: (port) }
+    })
+
+    this.setState({ portsArray })
+
+    this.setState({ loading: true });
+
+    axios({
+      url: "https://api.vesseltracker.com/api/v1/vessels/userlist/latestpositions",
+      method: "get",
+      headers: {
+        Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
+        "Content-Type": "application/json"
+      }
+    })
+      .then(response => {
+        this.parseVessels(response.data);
+        this.setState({ loading: false });
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({ loading: false });
+      });
+
+    
+  }
+
+  parseVessels = response => {
+    const vesselArray = response.vessels.map(vessel => {
+      return {
+        name: vessel.aisStatic.name,
+        imo: vessel.aisStatic.imo,
+        flag: vessel.aisStatic.flag,
+        position: [vessel.aisPosition.lat, vessel.aisPosition.lon],
+        speedOverGround: vessel.aisPosition.sog,
+        heading: vessel.aisPosition.hdg,
+        destination: vessel.aisVoyage.dest,
+        ETA: vessel.aisVoyage.eta,
+        draft: vessel.aisVoyage.draft
+      };
+    });
+
+    this.setState({ allVessels: vesselArray });
+  };
+
   handleChange = (event, value) => {
     this.setState({ value });
   };
 
-  setPort = port => {
-    this.setState({ port });
+  setDays = (event, value) => {
+    this.setState({ routeDays: value });
+    this.getCurrentVessels()
+  };
+
+  getDaysOutCrude = (vessel, speed) => {
+    const distance = geolib.getDistance(vessel, this.state.port.coordinates, 1000)
+    const daysOut = parseInt(distance / (speed * 1852 * 24))
+    return daysOut
   }
+
+  calculateRealDistance = async(vessel, port) => {
+    await axios({
+      url: "https://api.vesseltracker.com/api/v1/routes",
+      method: "get",
+      headers: {
+        Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
+        "Content-Type": "application/json"
+      },
+      params: {
+        fromLon: vessel.position[1],
+        fromLat: vessel.position[0],
+        toLon: port.coordinates[1],
+        toLat: port.coordinates[0],
+        speed: vessel.speedOverGround
+      }
+    })
+      .then(response => {
+        console.log(response.data.getRouteJson[0].journeytime / 24 / 60 / 60 / 1000, vessel.speedOverGround)
+        return response.data.getRouteJson[0]
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }
+  
+getCurrentVessels = async () => {
+  const portLocation = this.state.port.coordinates
+  const currentVessels = this.state.allVessels.filter(vessel => this.getDaysOutCrude(vessel.position, 15) < this.state.routeDays)
+  const trueVessels = currentVessels.filter(vessel => (this.calculateRealDistance(vessel, this.state.port).journeytime / 60 / 60 / 1000 / 24) < this.state.routeDays)
+  this.setState({currentVessels: currentVessels})
+}
+
+  setPA = (event, value) => {
+    this.setState({ PA: value });
+  };
+
+  onChange = (e, data) => {
+    console.log(data.value);
+    this.setState({ selected: data.value, port: { ...data.value, coordinates: data.value.coordinates.reverse() } });
+    this.getCurrentVessels()
+  }
+
+  setPort = port => {
+    this.setState({ port: { name: "Custom", coordinates: port } });
+    this.getCurrentVessels()
+  };
 
   handleChangeIndex = index => {
     this.setState({ value: index });
   };
   render() {
+    if (this.state.loading) return false;
     const { classes } = this.props;
+
     return (
       <div>
         <GridContainer>
@@ -62,33 +175,22 @@ class Dashboard extends React.Component {
                   type="text"
                   name="lat"
                   label="Lat"
-                  value={this.state.port ? this.state.port.lat : null}
+                  value={this.state.port.coordinates[0].toFixed(4)}
                 />
                 <input
                   type="text"
                   name="lon"
                   label="Lon"
-                  value={this.state.port ? this.state.port.lat : null}
+                  value={this.state.port.coordinates[1].toFixed(4)}
                 />
               </CardHeader>
               <CardFooter >
-                <FormControl className={classes.formControl}>
-                  <InputLabel htmlFor="age-simple">Age</InputLabel>
-                   <Select
-                    value={this.state.port}
-                    onChange={this.handleChange}
-                    inputProps={{
-                      name: 'age',
-                      id: 'age-simple',
-                    }}
-                  > 
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    <MenuItem value={10}>Ten</MenuItem>
-                    <MenuItem value={20}>Twenty</MenuItem>
-                    <MenuItem value={30}>Thirty</MenuItem>
-                  </Select>
+                <FormControl className="dashboardSelect">
+                  <Dropdown
+                    options={this.state.portsArray}
+                    placeholder='Port' fluid search selection
+                    onChange={this.onChange}>
+                  </Dropdown>
                 </FormControl> </CardFooter>
             </Card>
           </GridItem>
@@ -99,10 +201,10 @@ class Dashboard extends React.Component {
                   <Icon>today</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Days to Location</p>
-                <h3 className={classes.cardTitle}>1</h3>
+                <h3 className={classes.cardTitle}>{this.state.routeDays}</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={this.state.routeDays} min={0} max={6} step={1} name="routeDays" aria-labelledby="label" onChange={() => this.handleChange} />
+                <Slider value={this.state.routeDays} min={0} max={14} step={1} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -113,229 +215,15 @@ class Dashboard extends React.Component {
                   <Icon>data_usage</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Predictive Availability</p>
-                <h3 className={classes.cardTitle}>75</h3>
+                <h3 className={classes.cardTitle}>{this.state.PA}</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={1} min={0} max={100} step={1} name="paValue" aria-labelledby="label" onChange={this.handleChange} />
+                <Slider value={this.state.PA} min={0} max={100} step={1} name="paValue" aria-labelledby="label" onChange={this.setPA} />
               </CardFooter>
             </Card>
           </GridItem>
           <GridItem xs={12} sm={12} md={12}>
-            <SimpleMap port={this.state.port} setPort={this.setPort} /> {/*  <Card>
-              <CardHeader color="warning" stats icon>
-                <CardIcon color="warning">
-                  <Icon>content_copy</Icon>
-                </CardIcon>
-                <p className={classes.cardCategory}>Used Space</p>
-                <h3 className={classes.cardTitle}>
-                  49/50 <small>GB</small>
-                </h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <Danger>
-                    <Warning />
-                  </Danger>
-                  <a href="#pablo" onClick={e => e.preventDefault()}>
-                    Get more space
-                  </a>
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="success" stats icon>
-                <CardIcon color="success">
-                  <Store />
-                </CardIcon>
-                <p className={classes.cardCategory}>Revenue</p>
-                <h3 className={classes.cardTitle}>$34,245</h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <DateRange />
-                  Last 24 Hours
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="danger" stats icon>
-                <CardIcon color="danger">
-                  <Icon>info_outline</Icon>
-                </CardIcon>
-                <p className={classes.cardCategory}>Fixed Issues</p>
-                <h3 className={classes.cardTitle}>75</h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <LocalOffer />
-                  Tracked from Github
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={6} md={3}>
-            <Card>
-              <CardHeader color="info" stats icon>
-                <CardIcon color="info">
-                  <Accessibility />
-                </CardIcon>
-                <p className={classes.cardCategory}>Followers</p>
-                <h3 className={classes.cardTitle}>+245</h3>
-              </CardHeader>
-              <CardFooter stats>
-                <div className={classes.stats}>
-                  <Update />
-                  Just Updated
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-        </GridContainer>
-        <GridContainer>
-          <GridItem xs={12} sm={12} md={4}>
-            <Card chart>
-              <CardHeader color="success">
-                <ChartistGraph
-                  className="ct-chart"
-                  data={dailySalesChart.data}
-                  type="Line"
-                  options={dailySalesChart.options}
-                  listener={dailySalesChart.animation}
-                />
-              </CardHeader>
-              <CardBody>
-                <h4 className={classes.cardTitle}>Daily Sales</h4>
-                <p className={classes.cardCategory}>
-                  <span className={classes.successText}>
-                    <ArrowUpward className={classes.upArrowCardCategory} /> 55%
-                  </span>{" "}
-                  increase in today sales.
-                </p>
-              </CardBody>
-              <CardFooter chart>
-                <div className={classes.stats}>
-                  <AccessTime /> updated 4 minutes ago
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
-            <Card chart>
-              <CardHeader color="warning">
-                <ChartistGraph
-                  className="ct-chart"
-                  data={emailsSubscriptionChart.data}
-                  type="Bar"
-                  options={emailsSubscriptionChart.options}
-                  responsiveOptions={emailsSubscriptionChart.responsiveOptions}
-                  listener={emailsSubscriptionChart.animation}
-                />
-              </CardHeader>
-              <CardBody>
-                <h4 className={classes.cardTitle}>Email Subscriptions</h4>
-                <p className={classes.cardCategory}>
-                  Last Campaign Performance
-                </p>
-              </CardBody>
-              <CardFooter chart>
-                <div className={classes.stats}>
-                  <AccessTime /> campaign sent 2 days ago
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-          <GridItem xs={12} sm={12} md={4}>
-            <Card chart>
-              <CardHeader color="danger">
-                <ChartistGraph
-                  className="ct-chart"
-                  data={completedTasksChart.data}
-                  type="Line"
-                  options={completedTasksChart.options}
-                  listener={completedTasksChart.animation}
-                />
-              </CardHeader>
-              <CardBody>
-                <h4 className={classes.cardTitle}>Completed Tasks</h4>
-                <p className={classes.cardCategory}>
-                  Last Campaign Performance
-                </p>
-              </CardBody>
-              <CardFooter chart>
-                <div className={classes.stats}>
-                  <AccessTime /> campaign sent 2 days ago
-                </div>
-              </CardFooter>
-            </Card>
-          </GridItem>
-        </GridContainer>
-        <GridContainer>
-          <GridItem xs={12} sm={12} md={6}>
-            <CustomTabs
-              title="Tasks:"
-              headerColor="primary"
-              tabs={[
-                {
-                  tabName: "Bugs",
-                  tabIcon: BugReport,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0, 3]}
-                      tasksIndexes={[0, 1, 2, 3]}
-                      tasks={bugs}
-                    />
-                  )
-                },
-                {
-                  tabName: "Website",
-                  tabIcon: Code,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[0]}
-                      tasksIndexes={[0, 1]}
-                      tasks={website}
-                    />
-                  )
-                },
-                {
-                  tabName: "Server",
-                  tabIcon: Cloud,
-                  tabContent: (
-                    <Tasks
-                      checkedIndexes={[1]}
-                      tasksIndexes={[0, 1, 2]}
-                      tasks={server}
-                    />
-                  )
-                }
-              ]}
-            />
-          </GridItem>
-          <GridItem xs={12} sm={12} md={6}>
-            <Card>
-              <CardHeader color="warning">
-                <h4 className={classes.cardTitleWhite}>Employees Stats</h4>
-                <p className={classes.cardCategoryWhite}>
-                  New employees on 15th September, 2016
-                </p>
-              </CardHeader>
-              <CardBody>
-                <Table
-                  tableHeaderColor="warning"
-                  tableHead={["ID", "Name", "Salary", "Country"]}
-                  tableData={[
-                    ["1", "Dakota Rice", "$36,738", "Niger"],
-                    ["2", "Minerva Hooper", "$23,789", "Curaçao"],
-                    ["3", "Sage Rodriguez", "$56,142", "Netherlands"],
-                    ["4", "Philip Chaney", "$38,735", "Korea, South"]
-                  ]}
-                />
-              </CardBody>
-            </Card>*/}
+            <SimpleMap port={this.state.port} setPort={this.setPort} currentVessels={this.state.currentVessels} />
           </GridItem>
         </GridContainer>
       </div>
