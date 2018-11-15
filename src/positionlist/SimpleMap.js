@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { ReactBingmaps } from 'react-bingmaps';
-import axios from "axios";
+
 
 import MUIDataTable from "mui-datatables";
 
@@ -18,60 +18,14 @@ class SimpleMap extends Component {
       currentVessels: [],
       currentZoom: 5,
       dragging: false,
-      port: [13.0827, 80.2707],
-      mouseLocation: [13.0827, 80.2707]
+      mouseLocation: [0, 0]
     };
     this.outputLocation = this.outputLocation.bind(this);
     this.setDragEnd = this.setDragEnd.bind(this);
-    this.setDragStart = this.setDragStart.bind(this);
   }
 
-  componentDidMount = () => {
-    this.setState({ loading: true });
 
-    axios({
-      url: "https://api.vesseltracker.com/api/v1/vessels/userlist/latestpositions",
-      method: "get",
-      headers: {
-        Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
-        "Content-Type": "application/json"
-      }
-    })
-      .then(response => {
-        this.parseVessels(response.data);
-        this.setState({ loading: false });
-      })
-      .catch(err => {
-        console.log(err);
-        this.setState({ loading: false });
-      });
-
-    axios({
-      url: "https://api.vesseltracker.com/api/v1/routes",
-      method: "get",
-      headers: {
-        Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
-        "Content-Type": "application/json"
-      },
-      params: {
-        fromLon: 0,
-        fromLat: 0,
-        toLon: 1,
-        toLat: 1,
-        speed: 5
-      }
-
-    })
-      .then(response => {
-        console.log(response.data)
-      })
-      .catch(err => {
-        console.log(err);
-        this.setState({ loading: false });
-      });
-  };
-
-  shouldComponentUpdate(){
+  shouldComponentUpdate() {
     return !this.state.dragging;
   }
 
@@ -88,52 +42,27 @@ class SimpleMap extends Component {
       console.log(this)
     }*/
 
-  parseVessels = response => {
-    const vesselArray = response.vessels.map(vessel => {
-      return {
-        name: vessel.aisStatic.name,
-        imo: vessel.aisStatic.imo,
-        flag: vessel.aisStatic.flag,
-        position: [vessel.aisPosition.lat, vessel.aisPosition.lon],
-        speedOverGround: vessel.aisPosition.sog,
-        heading: vessel.aisPosition.hdg,
-        destination: vessel.aisVoyage.dest,
-        ETA: vessel.aisVoyage.eta
-      };
-    });
-
-    this.setState({ allVessels: vesselArray });
+  setDragEnd = () => {
+    this.props.setPort(this.state.mouseLocation)
   };
 
-
-  setDragStart = () =>{
-    this.setState({dragging: true})
-  }
-
-  setDragEnd = () =>{
-    this.setState({dragging: false})
-  }
-
   outputLocation = location => {
-      if (this.state.dragging){
-        console.log(location)
-        this.setState({port: [location.latitude, location.longitude]})}
-  }
+    this.setState({ mouseLocation: [location.latitude, location.longitude] })
+  };
 
   plotCurrentVessels = (vessels, zoom) => {
     const pointer = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0V0z"/><path fill="#FF8800" transform="rotate(insertRotation 12 12)" opacity=".7" d="M7.72 17.7l3.47-1.53.81-.36.81.36 3.47 1.53L12 7.27z"/><path fill="#FFFFFF" transform="rotate(insertRotation 12 12)" d="M4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2 4.5 20.29zm8.31-4.12l-.81-.36-.81.36-3.47 1.53L12 7.27l4.28 10.43-3.47-1.53z"/></svg>'
     const destination = {
-      "location": this.state.port,
+      "location": this.props.port.coordinates,
       "addHandler": "mouseover", //on mouseover the pushpin, infobox shown
       "infoboxOption": {
         title: "destination",
         visible: false,
       },
-      "pushPinOption": { color: "red", draggable: true},
-      "pushPinAddHandler": [{ type: "dragend", callback: this.setDragEnd},
-      { type: "dragstart", callback: this.setDragStart},]
+      "pushPinOption": { color: "red", draggable: true },
+      "pushPinAddHandler": { type: "dragend", callback: this.setDragEnd }
     }
-    
+
     const vesselPoints = vessels.map((vessel, i) => {
 
       let thisPointer = pointer;
@@ -156,13 +85,12 @@ class SimpleMap extends Component {
     });
 
     vesselPoints.push(destination);
-    console.log(vesselPoints)
 
     return vesselPoints;
   };
 
   render() {
-    const vessels = this.state.currentVessels;
+    const vessels = this.props.currentVessels;
 
     const columns = [
       {
@@ -203,7 +131,6 @@ class SimpleMap extends Component {
       return [vessel.name, vessel.imo, vessel.destination, vessel.speedOverGround]
     })
 
-    if (this.state.loading) return false;
     return (
       <div>
         <div style={{
@@ -214,12 +141,12 @@ class SimpleMap extends Component {
         }}>
           <ReactBingmaps ref={this.myRef}
             bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
-            center={[0, 0]}
+            center={this.props.port.coordinates}
             infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
             mapTypeId={"aerial"}
-            getLocation = {
-              {addHandler: "mousemove", callback:this.outputLocation}
-            }         
+            getLocation={
+              { addHandler: "mouseup", callback: this.outputLocation }
+            }
           />
         </div>
         <div>
