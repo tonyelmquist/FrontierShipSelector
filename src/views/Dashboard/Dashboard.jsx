@@ -164,7 +164,7 @@ getCurrentVessels = async () => {
     return (
       <div>
         <GridContainer>
-          <GridItem xs={12} sm={6} md={4}>
+          <GridItem xs={12} sm={6} md={3}>
             <Card>
               <CardHeader color="warning" stats icon>
                 <CardIcon color="warning">
@@ -194,7 +194,7 @@ getCurrentVessels = async () => {
                 </FormControl> </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={6} md={4}>
+          <GridItem xs={12} sm={6} md={3}>
             <Card>
               <CardHeader color="success" stats icon>
                 <CardIcon color="success">
@@ -208,7 +208,21 @@ getCurrentVessels = async () => {
               </CardFooter>
             </Card>
           </GridItem>
-          <GridItem xs={12} sm={6} md={4}>
+          <GridItem xs={12} sm={6} md={3}>
+            <Card>
+              <CardHeader color="danger" stats icon>
+                <CardIcon color="danger">
+                  <Icon>data_usage</Icon>
+                </CardIcon>
+                <p className={classes.cardCategory}>Predictive Availability</p>
+                <h3 className={classes.cardTitle}>{this.state.PA}</h3>
+              </CardHeader>
+              <CardFooter >
+                <Slider value={this.state.PA} min={0} max={100} step={1} name="paValue" aria-labelledby="label" onChange={this.setPA} />
+              </CardFooter>
+            </Card>
+          </GridItem>
+          <GridItem xs={12} sm={6} md={3}>
             <Card>
               <CardHeader color="danger" stats icon>
                 <CardIcon color="danger">
