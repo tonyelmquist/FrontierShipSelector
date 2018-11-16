@@ -21,6 +21,7 @@ import CardFooter from "components/Card/CardFooter.jsx";
 import SimpleMap from "../../positionlist/SimpleMap";
 import Input from '@material-ui/core/Input';
 import InputLabel from '@material-ui/core/InputLabel';
+import Switch from '@material-ui/core/Switch';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
@@ -45,13 +46,11 @@ class Dashboard extends React.Component {
 
   componentDidMount = () => {
     let ports = require('../../assets/json/ports.json');
-
     const portsArray = Object.values(ports).map((port, i) => {
       return { key: i, text: port.name, value: (port) }
     })
 
     this.setState({ portsArray })
-
     this.setState({ loading: true });
 
     axios({
@@ -70,8 +69,6 @@ class Dashboard extends React.Component {
         console.log(err);
         this.setState({ loading: false });
       });
-
-    
   }
 
   parseVessels = response => {
@@ -94,21 +91,28 @@ class Dashboard extends React.Component {
 
   handleChange = (event, value) => {
     this.setState({ value });
-  };
-
-  setDays = (event, value) => {
-    this.setState({ routeDays: value });
     this.getCurrentVessels()
   };
 
-  getDaysOutCrude = (vessel, speed) => {
-    const distance = geolib.getDistance(vessel, this.state.port.coordinates, 1000)
-    const daysOut = parseInt(distance / (speed * 1852 * 24))
-    return daysOut
+  triggerGetCurrentVessels(coordinates, hours){
+    clearTimeout(window.getVesselTimeout)
+    window.getVesselTimeout=setTimeout(this.getCurrentVessels(coordinates, hours / 3600), 500);
   }
 
-  calculateRealDistance = async(vessel, port) => {
-    await axios({
+  setDays = (event, value) => {
+    this.triggerGetCurrentVessels(this.state.port.coordinates, value)
+    this.setState({ routeDays: value });
+  };
+
+  getHoursOutCrude = (vessel, speed, coordinates) => {
+    const distance = geolib.getDistance(vessel, coordinates, 1000)
+    const hoursOut = parseInt((distance / 1852) / speed)
+    console.log(distance, hoursOut)
+    return hoursOut
+  }
+
+  calculateRealDistance = (vessel, port) => {
+    axios({
       url: "https://api.vesseltracker.com/api/v1/routes",
       method: "get",
       headers: {
@@ -131,32 +135,41 @@ class Dashboard extends React.Component {
         console.log(err);
       });
   }
+
+  getCurrentVessels = (coordinates, hours) => {
+    const portLocation = coordinates
+    const currentVessels = this.state.allVessels.filter(vessel => this.getHoursOutCrude(vessel.position, 15, coordinates) < hours)
+    // const trueVessels = currentVessels.filter(vessel => (this.calculateRealDistance(vessel, this.state.port).journeytime / 60 / 60 / 1000 / 24) < this.state.routeDays)
+    this.setState({ currentVessels })
+  }
+
   
-getCurrentVessels = async () => {
-  const portLocation = this.state.port.coordinates
-  const currentVessels = this.state.allVessels.filter(vessel => this.getDaysOutCrude(vessel.position, 15) < this.state.routeDays)
-  const trueVessels = currentVessels.filter(vessel => (this.calculateRealDistance(vessel, this.state.port).journeytime / 60 / 60 / 1000 / 24) < this.state.routeDays)
-  this.setState({currentVessels: currentVessels})
-}
 
   setPA = (event, value) => {
     this.setState({ PA: value });
   };
 
   onChange = (e, data) => {
-    console.log(data.value);
     this.setState({ selected: data.value, port: { ...data.value, coordinates: data.value.coordinates.reverse() } });
-    this.getCurrentVessels()
+    this.getCurrentVessels(data.value.coordinates, this.state.routeDays / 3600)
   }
 
-  setPort = port => {
-    this.setState({ port: { name: "Custom", coordinates: port } });
-    this.getCurrentVessels()
+  setPort = coordinates => {
+    this.setState({ port: { name: "Custom", coordinates } });
+    this.getCurrentVessels(coordinates, this.state.routeDays / 3600)
   };
 
   handleChangeIndex = index => {
     this.setState({ value: index });
   };
+
+  returnDaysAndHours = seconds => {
+    const days = Math.floor(seconds / (3600 * 24));
+    seconds -= days * 3600 * 24;
+    const hrs = Math.floor(seconds / 3600);
+    seconds -= hrs * 3600;
+    return (days + " days " + hrs + ' hours')
+  }
   render() {
     if (this.state.loading) return false;
     const { classes } = this.props;
@@ -200,11 +213,11 @@ getCurrentVessels = async () => {
                 <CardIcon color="success">
                   <Icon>today</Icon>
                 </CardIcon>
-                <p className={classes.cardCategory}>Days to Location</p>
-                <h3 className={classes.cardTitle}>{this.state.routeDays}</h3>
+                <p className={classes.cardCategory}>Time to Location</p>
+                <h3 className={classes.cardTitle}>{this.returnDaysAndHours(this.state.routeDays)}</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={this.state.routeDays} min={0} max={14} step={1} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
+                <Slider value={this.state.routeDays} min={0} max={2592000} step={360} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -229,10 +242,13 @@ getCurrentVessels = async () => {
                   <Icon>data_usage</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Predictive Availability</p>
-                <h3 className={classes.cardTitle}>{this.state.PA}</h3>
+                <Switch
+                />
+                <Switch
+                  color="primary"
+                />
               </CardHeader>
               <CardFooter >
-                <Slider value={this.state.PA} min={0} max={100} step={1} name="paValue" aria-labelledby="label" onChange={this.setPA} />
               </CardFooter>
             </Card>
           </GridItem>
