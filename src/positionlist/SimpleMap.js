@@ -1,9 +1,17 @@
 import React, { Component } from "react";
 import { ReactBingmaps } from 'react-bingmaps';
-import LoadingOverlay from 'react-loading-overlay';
-
 import MUIDataTable from "mui-datatables";
+import CircularProgress from '@material-ui/core/CircularProgress';
+import { withStyles } from '@material-ui/core/styles';
 
+import Typography from '@material-ui/core/Typography';
+import Modal from '@material-ui/core/Modal';
+
+const styles = theme => ({
+  progress: {
+    margin: theme.spacing.unit * 2,
+  },
+});
 
 class SimpleMap extends Component {
   constructor(props) {
@@ -89,8 +97,9 @@ class SimpleMap extends Component {
     return vesselPoints;
   };
 
+
   render() {
-    const { vessels, loading } = this.props;
+    const { vessels, vesselsLoading, classes } = this.props;
 
     const columns = [
       {
@@ -138,42 +147,55 @@ class SimpleMap extends Component {
       return [vessel.name, vessel.imo, vessel.destination, vessel.speedOverGround, vessel.draft]
     })
 
+
+
     return (
-      <LoadingOverlay
-        active={loading}
-        spinner
-        text='Retrieving route information...'
-      >
-        <div>
-          <div style={{
-            height: "400px",
-            boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.14)",
-            marginBottom: "30px",
-            borderRadius: "6px",
-          }}>
-            <ReactBingmaps ref={this.myRef}
-              bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
-              center={this.props.port.coordinates}
-              infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
-              mapTypeId={"aerial"}
-              getLocation={
-                { addHandler: "mouseup", callback: this.outputLocation }
-              }
-            />
-          </div>
-          <div>
-            <MUIDataTable
-              title={"Position List"}
-              data={tableData}
-              columns={columns}
-              options={options}
-            />
-          </div>
+
+      <div>
+        <div style={{
+          height: "400px",
+          boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.14)",
+          marginBottom: "30px",
+          borderRadius: "6px",
+        }}>
+          <ReactBingmaps ref={this.myRef}
+            bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
+            center={this.props.port.coordinates}
+            infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
+            mapTypeId={"aerial"}
+            getLocation={
+              { addHandler: "mouseup", callback: this.outputLocation }
+            }
+          />
         </div>
-      </LoadingOverlay>
+        <div>
+          <MUIDataTable
+            title={"Position List"}
+            data={tableData}
+            columns={columns}
+            options={options}
+          />
+        </div>
+        <Modal
+          aria-labelledby="simple-modal-title"
+          aria-describedby="simple-modal-description"
+          open={vesselsLoading}
+        >
+          <div style={{
+            top: 'calc(50% - 50px)',
+            left: 'calc(50% - 300px)',
+            position: 'fixed',
+            width: '600px',
+            textAlign: 'center'
+          }}>
+            <CircularProgress className={classes.progress} size={100}/>
+            <h3 style={{color: 'lightgray'}}>Loading route information for {this.props.currentVesselName}</h3>
+          </div>
+        </Modal>
+      </div>
 
     );
   }
 }
 
-export default SimpleMap;
+export default withStyles(styles)(SimpleMap);

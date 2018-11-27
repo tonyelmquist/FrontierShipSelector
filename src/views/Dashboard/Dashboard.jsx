@@ -44,7 +44,8 @@ class Dashboard extends React.Component {
     allVessels: [],
     currentVessels: [],
     realVessels: [],
-    loading: false,
+    vesselsLoading: false,
+    currentVesselName: ''
   };
 
   componentDidMount = () => {
@@ -118,7 +119,7 @@ class Dashboard extends React.Component {
   }
 
   getAllRoutesAsync = (vessels, port) => {
-    this.setState({ loading: true })
+    this.setState({ vesselsLoading: true })
     //Map every endpoint so we can make a request with each URL
     var promises = vessels.map(vessel => {
       return new Promise((resolve, reject) => {
@@ -138,6 +139,7 @@ class Dashboard extends React.Component {
           }
         })
           .then(response => {
+            this.setState({currentVesselName: vessel.name})
             const route = response.data.getRouteJson[0]
             vessel.eta = route.eta;
             vessel.journeytime = route.journeytime;
@@ -173,7 +175,7 @@ class Dashboard extends React.Component {
       return false
     });
     console.log(realVessels)
-    this.setState({ realVessels, loading: false });
+    this.setState({ realVessels, vesselsLoading: false });
   }
 
   setPA = (event, value) => {
@@ -297,7 +299,7 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={12} md={12}>
-            <SimpleMap port={this.state.port} setPort={this.setPort} vessels={this.state.realVessels} loading={this.state.loading} />
+            <SimpleMap port={this.state.port} setPort={this.setPort} vessels={this.state.realVessels} vesselsLoading={this.state.vesselsLoading} currentVesselName={this.state.currentVesselName}/>
           </GridItem>
         </GridContainer>
       </div>
