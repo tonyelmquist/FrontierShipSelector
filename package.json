@@ -28,6 +28,7 @@
     "react-google-maps": "9.4.5",
     "react-leaflet": "1.8.0",
     "react-leaflet-rotatedmarker": "^0.1.0",
+    "react-loading-overlay": "^0.3.0",
     "react-router-dom": "4.3.1",
     "react-scripts": "1.1.4",
     "react-swipeable-views": "0.12.15",

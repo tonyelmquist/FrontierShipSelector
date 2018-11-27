@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { ReactBingmaps } from 'react-bingmaps';
-
+import LoadingOverlay from 'react-loading-overlay';
 
 import MUIDataTable from "mui-datatables";
 
@@ -90,7 +90,7 @@ class SimpleMap extends Component {
   };
 
   render() {
-    const vessels = this.props.currentVessels;
+    const { vessels, loading } = this.props;
 
     const columns = [
       {
@@ -120,6 +120,13 @@ class SimpleMap extends Component {
           filter: true,
           sort: true
         }
+      },
+      {
+        name: "Draft",
+        options: {
+          filter: true,
+          sort: true
+        }
       }
     ];
 
@@ -128,36 +135,43 @@ class SimpleMap extends Component {
     };
 
     const tableData = vessels.map(vessel => {
-      return [vessel.name, vessel.imo, vessel.destination, vessel.speedOverGround]
+      return [vessel.name, vessel.imo, vessel.destination, vessel.speedOverGround, vessel.draft]
     })
 
     return (
-      <div>
-        <div style={{
-          height: "400px",
-          boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.14)",
-          marginBottom: "30px",
-          borderRadius: "6px",
-        }}>
-          <ReactBingmaps ref={this.myRef}
-            bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
-            center={this.props.port.coordinates}
-            infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
-            mapTypeId={"aerial"}
-            getLocation={
-              { addHandler: "mouseup", callback: this.outputLocation }
-            }
-          />
-        </div>
+      <LoadingOverlay
+        active={loading}
+        spinner
+        text='Retrieving route information...'
+      >
         <div>
-          <MUIDataTable
-            title={"Position List"}
-            data={tableData}
-            columns={columns}
-            options={options}
-          />
+          <div style={{
+            height: "400px",
+            boxShadow: "0 1px 4px 0 rgba(0, 0, 0, 0.14)",
+            marginBottom: "30px",
+            borderRadius: "6px",
+          }}>
+            <ReactBingmaps ref={this.myRef}
+              bingmapKey="AsfGGUcrNycIg6JAG7NNP2WYHw73VUb8jNdUDhMHkzYiZKx8bFRm87UauXmi5HHe"
+              center={this.props.port.coordinates}
+              infoboxesWithPushPins={this.plotCurrentVessels(vessels)}
+              mapTypeId={"aerial"}
+              getLocation={
+                { addHandler: "mouseup", callback: this.outputLocation }
+              }
+            />
+          </div>
+          <div>
+            <MUIDataTable
+              title={"Position List"}
+              data={tableData}
+              columns={columns}
+              options={options}
+            />
+          </div>
         </div>
-      </div>
+      </LoadingOverlay>
+
     );
   }
 }

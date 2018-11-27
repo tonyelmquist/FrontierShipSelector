@@ -25,6 +25,7 @@ import Switch from '@material-ui/core/Switch';
 import MenuItem from '@material-ui/core/MenuItem';
 import FormHelperText from '@material-ui/core/FormHelperText';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Dropdown } from 'semantic-ui-react'
 import geolib from 'geolib'
 import axios from "axios";
@@ -43,6 +44,7 @@ class Dashboard extends React.Component {
     allVessels: [],
     currentVessels: [],
     realVessels: [],
+    loading: false,
   };
 
   componentDidMount = () => {
@@ -83,7 +85,7 @@ class Dashboard extends React.Component {
         heading: vessel.aisPosition.hdg,
         destination: vessel.aisVoyage.dest,
         ETA: vessel.aisVoyage.eta,
-        draft: vessel.aisVoyage.draft
+        draft: vessel.aisVoyage.draught
       };
     });
 
@@ -101,9 +103,13 @@ class Dashboard extends React.Component {
   }
 
   setDays = (event, value) => {
-    this.triggerGetCurrentVessels(this.state.port.coordinates, value)
+    // this.triggerGetCurrentVessels(this.state.port.coordinates, value)
     this.setState({ routeDays: value });
   };
+
+  setHours = () => {
+    this.triggerGetCurrentVessels(this.state.port.coordinates, this.state.routeDays)
+  }
 
   getHoursOutCrude = (vessel, speed, coordinates) => {
     const distance = geolib.getDistance(vessel, coordinates, 1000)
@@ -112,6 +118,7 @@ class Dashboard extends React.Component {
   }
 
   getAllRoutesAsync = (vessels, port) => {
+    this.setState({ loading: true })
     //Map every endpoint so we can make a request with each URL
     var promises = vessels.map(vessel => {
       return new Promise((resolve, reject) => {
@@ -166,7 +173,7 @@ class Dashboard extends React.Component {
       return false
     });
     console.log(realVessels)
-    this.setState({ realVessels });
+    this.setState({ realVessels, loading: false });
   }
 
   setPA = (event, value) => {
@@ -202,19 +209,19 @@ class Dashboard extends React.Component {
       <div>
         <GridContainer>
           <GridItem xs={12} sm={6} md={3}>
-            <Card>
+            <Card style={{ height: '150px' }}>
               <CardHeader color="warning" stats icon>
                 <CardIcon color="warning">
                   <Icon>place</Icon>
                 </CardIcon>
                 <p className={classes.cardCategory}>Cargo Location</p>
-                <input
+                <Input
                   type="text"
                   name="lat"
                   label="Lat"
                   value={this.state.port.coordinates[0].toFixed(4)}
                 />
-                <input
+                <Input
                   type="text"
                   name="lon"
                   label="Lon"
@@ -232,7 +239,7 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={6} md={3}>
-            <Card>
+            <Card style={{ height: '150px' }}>
               <CardHeader color="success" stats icon>
                 <CardIcon color="success">
                   <Icon>today</Icon>
@@ -241,12 +248,12 @@ class Dashboard extends React.Component {
                 <h3 className={classes.cardTitle}>{this.returnDaysAndHours(this.state.routeDays)}</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={this.state.routeDays} min={0} max={2592000} step={3600} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
+                <Slider value={this.state.routeDays} min={0} max={2592000} step={3600} name="routeDays" aria-labelledby="label" onChange={this.setDays} onMouseUp={this.setHours} />
               </CardFooter>
             </Card>
           </GridItem>
           <GridItem xs={12} sm={6} md={3}>
-            <Card>
+            <Card style={{ height: '150px' }}>
               <CardHeader color="danger" stats icon>
                 <CardIcon color="danger">
                   <Icon>data_usage</Icon>
@@ -260,16 +267,29 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={6} md={3}>
-            <Card>
+            <Card style={{ height: '150px' }}>
               <CardHeader color="danger" stats icon>
                 <CardIcon color="danger">
-                  <Icon>data_usage</Icon>
+                  <Icon>settings</Icon>
                 </CardIcon>
-                <p className={classes.cardCategory}>Predictive Availability</p>
-                <Switch
+                <p className={classes.cardCategory}>Options</p>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={this.state.useBallast}
+                      value="ballast"
+                    />
+                  }
+                  label="In ballast"
                 />
-                <Switch
-                  color="primary"
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={this.state.usePA}
+                      value="usePA"
+                    />
+                  }
+                  label="use PA"
                 />
               </CardHeader>
               <CardFooter >
@@ -277,7 +297,7 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={12} md={12}>
-            <SimpleMap port={this.state.port} setPort={this.setPort} currentVessels={this.state.realVessels} />
+            <SimpleMap port={this.state.port} setPort={this.setPort} vessels={this.state.realVessels} loading={this.state.loading} />
           </GridItem>
         </GridContainer>
       </div>
