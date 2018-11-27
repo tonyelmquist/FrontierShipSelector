@@ -42,6 +42,7 @@ class Dashboard extends React.Component {
     PA: 50,
     allVessels: [],
     currentVessels: [],
+    realVessels: [],
   };
 
   componentDidMount = () => {
@@ -94,9 +95,9 @@ class Dashboard extends React.Component {
     this.getCurrentVessels()
   };
 
-  triggerGetCurrentVessels(coordinates, hours){
+  triggerGetCurrentVessels(coordinates, hours) {
     clearTimeout(window.getVesselTimeout)
-    window.getVesselTimeout=setTimeout(this.getCurrentVessels(coordinates, hours / 3600), 500);
+    window.getVesselTimeout = setTimeout(this.getCurrentVessels(coordinates, hours / 3600), 500);
   }
 
   setDays = (event, value) => {
@@ -107,43 +108,66 @@ class Dashboard extends React.Component {
   getHoursOutCrude = (vessel, speed, coordinates) => {
     const distance = geolib.getDistance(vessel, coordinates, 1000)
     const hoursOut = parseInt((distance / 1852) / speed)
-    console.log(distance, hoursOut)
     return hoursOut
   }
 
-  calculateRealDistance = (vessel, port) => {
-    axios({
-      url: "https://api.vesseltracker.com/api/v1/routes",
-      method: "get",
-      headers: {
-        Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
-        "Content-Type": "application/json"
-      },
-      params: {
-        fromLon: vessel.position[1],
-        fromLat: vessel.position[0],
-        toLon: port.coordinates[1],
-        toLat: port.coordinates[0],
-        speed: vessel.speedOverGround
-      }
-    })
-      .then(response => {
-        console.log(response.data.getRouteJson[0].journeytime / 24 / 60 / 60 / 1000, vessel.speedOverGround)
-        return response.data.getRouteJson[0]
-      })
-      .catch(err => {
-        console.log(err);
+  getAllRoutesAsync = (vessels, port) => {
+    //Map every endpoint so we can make a request with each URL
+    var promises = vessels.map(vessel => {
+      return new Promise((resolve, reject) => {
+        axios({
+          url: "https://api.vesseltracker.com/api/v1/routes",
+          method: "get",
+          headers: {
+            Authorization: "15dcbc0e-214a-49e0-8ed9-6f3e0c4a640b",
+            "Content-Type": "application/json"
+          },
+          params: {
+            fromLon: vessel.position[1],
+            fromLat: vessel.position[0],
+            toLon: port[1],
+            toLat: port[0],
+            speed: vessel.speedOverGround
+          }
+        })
+          .then(response => {
+            const route = response.data.getRouteJson[0]
+            vessel.eta = route.eta;
+            vessel.journeytime = route.journeytime;
+            vessel.distance = route.distance;
+            resolve(vessel);
+          })
+          .catch(err => {
+            reject(err);
+          });
       });
-  }
+    });
+    //Resolve ALL the promises from above (we are after all making multiple call to get all the different shirt info)
+    Promise.all(promises).then(routes => {
+      this.returnRealDistanceVessels(routes, this.state.routeDays);
+    });
+  };
 
   getCurrentVessels = (coordinates, hours) => {
     const portLocation = coordinates
     const currentVessels = this.state.allVessels.filter(vessel => this.getHoursOutCrude(vessel.position, 15, coordinates) < hours)
-    // const trueVessels = currentVessels.filter(vessel => (this.calculateRealDistance(vessel, this.state.port).journeytime / 60 / 60 / 1000 / 24) < this.state.routeDays)
-    this.setState({ currentVessels })
-  }
+    this.getAllRoutesAsync(currentVessels, portLocation);
+    this.setState({ currentVessels });
+  };
 
-  
+  returnRealDistanceVessels = (currentVessels, hours) => {
+    console.log(currentVessels, hours)
+    const realVessels = currentVessels.filter(vessel => {
+      if (vessel.journeytime) {
+        const ttd = parseInt(vessel.journeytime) / 1000 / 60 / 60;
+        console.log(ttd, hours)
+        if (ttd < hours / 3600) return true
+      }
+      return false
+    });
+    console.log(realVessels)
+    this.setState({ realVessels });
+  }
 
   setPA = (event, value) => {
     this.setState({ PA: value });
@@ -217,7 +241,7 @@ class Dashboard extends React.Component {
                 <h3 className={classes.cardTitle}>{this.returnDaysAndHours(this.state.routeDays)}</h3>
               </CardHeader>
               <CardFooter >
-                <Slider value={this.state.routeDays} min={0} max={2592000} step={360} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
+                <Slider value={this.state.routeDays} min={0} max={2592000} step={3600} name="routeDays" aria-labelledby="label" onChange={this.setDays} />
               </CardFooter>
             </Card>
           </GridItem>
@@ -253,7 +277,7 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={12} md={12}>
-            <SimpleMap port={this.state.port} setPort={this.setPort} currentVessels={this.state.currentVessels} />
+            <SimpleMap port={this.state.port} setPort={this.setPort} currentVessels={this.state.realVessels} />
           </GridItem>
         </GridContainer>
       </div>
