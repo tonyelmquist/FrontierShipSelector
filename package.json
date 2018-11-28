@@ -1,6 +1,6 @@
 {
-  "name": "material-dashboard-react",
-  "version": "1.4.1",
+  "name": "frontier-ship-finder",
+  "version": "0.1.0",
   "description": "Frontier Ship Finder",
   "private": false,
   "main": "dist/index.js",
@@ -54,7 +54,7 @@
   "bugs": {
     "url": "https://github.com/creativetimofficial/material-dashboard-react/issues"
   },
-  "homepage": "https://creativetimofficial.github.io/material-dashboard-react/#/dashboard",
+  "homepage": "https://www.xpdtr.com/frontier-ship-finder/#/dashboard",
   "optionalDependencies": {
     "babel-eslint": "^7.2.3",
     "eslint": "^4.19.1",
