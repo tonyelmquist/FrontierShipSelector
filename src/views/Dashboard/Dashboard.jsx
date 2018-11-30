@@ -139,7 +139,7 @@ class Dashboard extends React.Component {
           }
         })
           .then(response => {
-            this.setState({currentVesselName: vessel.name})
+            this.setState({ currentVesselName: vessel.name })
             const route = response.data.getRouteJson[0]
             vessel.eta = route.eta;
             vessel.journeytime = route.journeytime;
@@ -299,7 +299,7 @@ class Dashboard extends React.Component {
             </Card>
           </GridItem>
           <GridItem xs={12} sm={12} md={12}>
-            <SimpleMap port={this.state.port} setPort={this.setPort} vessels={this.state.realVessels} vesselsLoading={this.state.vesselsLoading} currentVesselName={this.state.currentVesselName}/>
+            <SimpleMap port={this.state.port} setPort={this.setPort} vessels={this.state.realVessels} vesselsLoading={this.state.vesselsLoading} currentVesselName={this.state.currentVesselName} />
           </GridItem>
         </GridContainer>
       </div>

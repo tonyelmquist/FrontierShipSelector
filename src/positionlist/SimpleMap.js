@@ -3,8 +3,6 @@ import { ReactBingmaps } from 'react-bingmaps';
 import MUIDataTable from "mui-datatables";
 import CircularProgress from '@material-ui/core/CircularProgress';
 import { withStyles } from '@material-ui/core/styles';
-
-import Typography from '@material-ui/core/Typography';
 import Modal from '@material-ui/core/Modal';
 
 const styles = theme => ({
@@ -37,19 +35,6 @@ class SimpleMap extends Component {
     return !this.state.dragging;
   }
 
-  /*
-    addMarker = e => {
-      const port = e.latlng;
-      this.props.setPort(port);
-    }
-  
-  
-    onZoomend = () => {
-      //const zoom = this.map.leafletElement.getZoom();
-      //this.setState({currentZoom: zoom});
-      console.log(this)
-    }*/
-
   setDragEnd = () => {
     this.props.setPort(this.state.mouseLocation)
   };
@@ -64,7 +49,7 @@ class SimpleMap extends Component {
       "location": this.props.port.coordinates,
       "addHandler": "mouseover", //on mouseover the pushpin, infobox shown
       "infoboxOption": {
-        title: "destination",
+        title: this.props.port.name ? this.props.port.name : "Destination",
         visible: false,
       },
       "pushPinOption": { color: "red", draggable: true },
@@ -188,8 +173,8 @@ class SimpleMap extends Component {
             width: '600px',
             textAlign: 'center'
           }}>
-            <CircularProgress className={classes.progress} size={100}/>
-            <h3 style={{color: 'lightgray'}}>Loading route information for {this.props.currentVesselName}</h3>
+            <CircularProgress className={classes.progress} size={100} />
+            <h3 style={{ color: 'lightgray' }}>Loading route information for {this.props.currentVesselName}</h3>
           </div>
         </Modal>
       </div>
